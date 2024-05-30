@@ -1,0 +1,74 @@
+const { Client, GatewayIntentBits, SlashCommandBuilder } = require('discord.js');
+
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+
+client.on("ready", () => {
+    console.log("Bot is ready!");
+    client.user.setActivity('I got the deals');
+
+    const find = new SlashCommandBuilder()
+        .setName('find')
+        .setDescription('Find Minerva');
+
+    const sale1 = new SlashCommandBuilder()
+        .setName('sale1')
+        .setDescription('List of sales, and pricing');
+
+    client.application.commands.create(find);
+    client.application.commands.create(sale1);
+
+    client.on('interactionCreate', async (interaction) => {
+        if (!interaction.isCommand()) return;
+        if (interaction.commandName === 'sale1') {
+            const embed = {
+                title: 'Sale #1',
+                description: 'Here are the current sales and pricing:',
+                fields: [
+                    { name: 'Plan: Cattle Prod', value: '188 <:360:1245655782150897764>' },
+                    { name: 'Plan: Farmable dirt tiles', value: '375 <:360:1245655782150897764>' },
+                    { name: 'Plan: Gauss minigun gunner sights', value: '38 <:360:1245655782150897764>' },
+                    { name: 'Plan: Gauss minigun Tesla capacitor', value: '75 <:360:1245655782150897764>' },
+                    { name: 'Plan: Gauss minigun Tesla dynamo', value: '75 <:360:1245655782150897764>' },
+                    { name: 'Plan: Secret Service chest piece', value: '938 <:360:1245655782150897764>' },
+                    { name: 'Plan: Secret Service helmet', value: '1238 <:360:1245655782150897764>' },
+                    { name: 'Plan: Secret Service left arm', value: '563 <:360:1245655782150897764>' },
+                    { name: 'Plan: Secret Service left leg', value: '563 <:360:1245655782150897764>' },
+                    { name: 'Plan: Secret Service right arm', value: '563 <:360:1245655782150897764>' },
+                    { name: 'Plan: Secret Service right leg', value: '563 <:360:1245655782150897764>' },
+                    { name: 'Plan: Super reactor', value: '2000 <:360:1245655782150897764>' },
+                    { name: 'Plan: Sympto-Matic', value: '2000 <:360:1245655782150897764>' },
+                    { name: 'Plan: War glaive', value: '2000 <:360:1245655782150897764>' },
+                    { name: 'Plan: Chemists Backpack Mod', value: '263 <:360:1245655782150897764>' }
+                ],
+                color: 0x0099ff
+            };
+
+            await interaction.reply({ embeds: [embed] });
+        }
+        if (interaction.commandName === 'find') {
+            try {
+                const { default: fetch } = await import('node-fetch'); // Use dynamic import() to import node-fetch
+                const response = await fetch('https://www.falloutbuilds.com/fo76/minerva/');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch webpage');
+                }
+                const html = await response.text();
+                const $ = require('cheerio');
+                const cheerio = $.load(html);
+
+                // Find the div with class "post-content" and extract its text
+                const saleInfo = $('.post-content').text().trim();
+
+                if (!saleInfo) {
+                    throw new Error('Sale info not found');
+                }
+
+                console.log('Minerva sale info:', saleInfo);
+                // Respond to the interaction with the extracted sale information
+                await interaction.reply(saleInfo);
+            } catch (error) {
+                console.error('Error fetching Minerva sale info:', error);
+                await interaction.reply('Sorry, I encountered an error while fetching Minerva sale info.');
+            }
+        }
+    });
